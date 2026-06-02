@@ -1,12 +1,19 @@
 package com.payplux.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtFilter; // 🔥 ADD THIS
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -14,9 +21,17 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/users/**").permitAll() // allow all user APIs
+
+                        .requestMatchers("/api/v1/users/register", "/api/v1/users/login").permitAll()
+
+                        .requestMatchers("/api/v1/users/admin/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/v1/users/**").hasAnyRole("USER", "ADMIN")
+
                         .anyRequest().authenticated()
-                );
+                )
+                // 🔥 THIS IS THE MISSING PART
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

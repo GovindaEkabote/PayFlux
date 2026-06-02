@@ -26,13 +26,18 @@ public class UserController {
         return new ResponseEntity<>(saveUser, HttpStatus.CREATED);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/admin/{id}")
     public ResponseEntity<UserModel> getUserById(@PathVariable Long id) {
         UserModel user = userService.getById(id);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
+    @GetMapping("/{id}")
+    public ResponseEntity<UserModel> getUserProfileById(@PathVariable Long id) {
+        UserModel user = userService.getById(id);
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    }
 
-    @GetMapping("/all")
+    @GetMapping("/admin/all")
     public ResponseEntity<List<UserModel>> getAllUsers() {
         List<UserModel> users = userService.getAllUsers();
         return new ResponseEntity<>(users, HttpStatus.OK);
