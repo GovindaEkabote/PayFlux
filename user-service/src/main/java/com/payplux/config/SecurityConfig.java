@@ -13,7 +13,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtFilter; // 🔥 ADD THIS
+    private final JwtAuthenticationFilter jwtFilter;
+    private final CustomAuthenticationEntryPoint authEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -30,6 +32,12 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
+
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler(accessDeniedHandler)   // 🔥 403
+                        .authenticationEntryPoint(authEntryPoint)
+                )
+
                 // 🔥 THIS IS THE MISSING PART
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
