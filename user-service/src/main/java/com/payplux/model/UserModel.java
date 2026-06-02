@@ -26,6 +26,9 @@ public class UserModel {
     @Column(unique = true, nullable = false)
     private String phone;
 
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

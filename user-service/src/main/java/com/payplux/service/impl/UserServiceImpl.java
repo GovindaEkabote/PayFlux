@@ -1,11 +1,18 @@
 package com.payplux.service.impl;
 
+import com.payplux.dto.request.LoginRequest;
+import com.payplux.dto.response.AuthResponse;
 import com.payplux.exception.custom.DuplicateResourceException;
+import com.payplux.exception.custom.InvalidRequestException;
 import com.payplux.exception.custom.UserNotFoundException;
+import com.payplux.model.Role;
 import com.payplux.model.UserModel;
 import com.payplux.repository.UserRepository;
+import com.payplux.security.JwtUtil;
 import com.payplux.service.UserService;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,14 +24,24 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
+    private final PasswordEncoder passwordEncoder;
+
+    private final JwtUtil jwtUtil;
+
     @Override
     public UserModel registerUser(UserModel userModel) {
+
         if (userRepository.findByEmail(userModel.getEmail()).isPresent()){
             throw new DuplicateResourceException("Email already exists");
         }
+
         if (userRepository.findByPhone(userModel.getPhone()).isPresent()){
             throw new DuplicateResourceException("Phone already exists");
         }
+
+        // ✅ Encode password
+        userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
+        userModel.setRole(Role.USER);
         return userRepository.save(userModel);
     }
 
@@ -59,5 +76,27 @@ public class UserServiceImpl implements UserService {
                 );
 
         userRepository.delete(user);
+    }
+
+    @Override
+    public AuthResponse login(LoginRequest loginRequest) {
+
+        UserModel user = userRepository.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            throw new InvalidRequestException("Invalid email or password");
+        }
+
+        String token = jwtUtil.generateToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+
+        return AuthResponse.builder()
+                .token(token)
+                .role(user.getRole().name())
+                .build();
     }
 }

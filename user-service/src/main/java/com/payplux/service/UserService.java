@@ -1,5 +1,7 @@
 package com.payplux.service;
 
+import com.payplux.dto.request.LoginRequest;
+import com.payplux.dto.response.AuthResponse;
 import com.payplux.model.UserModel;
 
 import java.util.List;
@@ -18,4 +20,6 @@ public interface UserService {
     List<UserModel> getAllUsers();
 
     void deleteUser(Long id);
+
+    AuthResponse login(LoginRequest loginRequest);
 }

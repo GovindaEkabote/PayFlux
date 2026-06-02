@@ -1,5 +1,7 @@
 package com.payplux.controller;
 
+import com.payplux.dto.request.LoginRequest;
+import com.payplux.dto.response.AuthResponse;
 import com.payplux.model.UserModel;
 import com.payplux.service.UserService;
 import lombok.AllArgsConstructor;
@@ -48,10 +50,15 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("User not found")));
     }
 
-    @GetMapping("/get/email")
+    @GetMapping("/get/{email}")
     public ResponseEntity<Optional<UserModel>> getByEmail(@PathVariable String email) {
         Optional<UserModel> user = userService.getByEmail(email);
         return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(userService.login(request));
     }
 
 }
