@@ -12,6 +12,7 @@ import com.payplux.security.JwtUtil;
 import com.payplux.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -98,5 +99,19 @@ public class UserServiceImpl implements UserService {
                 .token(token)
                 .role(user.getRole().name())
                 .build();
+    }
+
+    @Override
+    public Optional<UserModel> getCurrentUser(String token) {
+        String email = jwtUtil.extractEmail(token);
+        System.out.println(email);
+        return userRepository.findByEmail(email);
+    }
+
+    public UserModel updateUserRole(Long userId, Role role){
+        UserModel user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+        user.setRole(role);
+        return userRepository.save(user);
     }
 }

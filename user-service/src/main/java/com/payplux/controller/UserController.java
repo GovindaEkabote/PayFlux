@@ -2,8 +2,10 @@ package com.payplux.controller;
 
 import com.payplux.dto.request.LoginRequest;
 import com.payplux.dto.response.AuthResponse;
+import com.payplux.model.Role;
 import com.payplux.model.UserModel;
 import com.payplux.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,12 +21,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping("/register")
-    public ResponseEntity<UserModel> registerUser(@RequestBody  UserModel userModel) {
-        UserModel saveUser = userService.registerUser(userModel);
 
-        return new ResponseEntity<>(saveUser, HttpStatus.CREATED);
-    }
 
     @GetMapping("/admin/{id}")
     public ResponseEntity<UserModel> getUserById(@PathVariable Long id) {
@@ -61,9 +58,8 @@ public class UserController {
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(userService.login(request));
-    }
+
+
+
 
 }
