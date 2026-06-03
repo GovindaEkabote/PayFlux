@@ -28,6 +28,7 @@ public class AuthSession {
 
     private LocalDateTime lastActiveAt;
 
+    @Column(name = "is_revoked")
     private boolean isRevoked = false;
 
     @CreationTimestamp

@@ -18,6 +18,8 @@ public interface UserService {
 
     Optional<UserModel> getByEmail(String email);
 
+
+
     Optional<UserModel> getByPhone(String phone);
 
     UserModel getById(Long id);
@@ -36,5 +38,7 @@ public interface UserService {
     AuthResponse refreshToken(String refreshToken);
 
     List<SessionResponse> getActiveSessions(Long userId);
+
+//    void revokeSession(Long userId, Long sessionId);
 
 }

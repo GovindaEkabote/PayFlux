@@ -10,6 +10,7 @@ import com.payplux.model.Role;
 import com.payplux.model.UserModel;
 import com.payplux.repository.AuthSessionRepository;
 import com.payplux.security.JwtUtil;
+import com.payplux.service.AuthService;
 import com.payplux.service.RefreshTokenService;
 import com.payplux.service.UserService;
 import com.payplux.util.DeviceUtils;
@@ -18,10 +19,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 
 @RestController
@@ -33,6 +37,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final AuthSessionRepository authSessionRepository;
+    private final AuthService authService;
 
     @PostMapping("/register")
     public ResponseEntity<UserModel> registerUser(@RequestBody UserModel userModel) {
@@ -142,5 +147,19 @@ public class AuthController {
         return ResponseEntity.ok(
                 userService.getActiveSessions(userId)
         );
+    }
+
+    @DeleteMapping("/session/{sessionId}")
+    public ResponseEntity<String> revokeSession(
+            @PathVariable Long sessionId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+
+        UserModel user = userService.getByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        authService.revokeSession(user.getId(), sessionId);
+
+        return ResponseEntity.ok("Session revoked successfully");
     }
 }

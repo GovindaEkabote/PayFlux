@@ -23,6 +23,7 @@ import lombok.SneakyThrows;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -171,10 +172,13 @@ public class UserServiceImpl implements UserService {
                 .findByUserIdAndIsRevokedFalse(userId)
                 .stream()
                 .map(authSession -> new SessionResponse(
+                        authSession.getId(),
                         authSession.getDeviceInfo(),
                         authSession.getIpAddress(),
                         authSession.getLastActiveAt()
                 ))
                 .toList();
     }
+
+
 }
