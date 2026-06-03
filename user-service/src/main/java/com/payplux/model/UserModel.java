@@ -21,6 +21,7 @@ public class UserModel {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(nullable = false)
     private String password;
 
     @Column(unique = true, nullable = false)
@@ -29,10 +30,32 @@ public class UserModel {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccountStatus status;
+
+    @Column(nullable = false)
+    private boolean isEmailVerified = false;
+
+    @Column(nullable = false)
+    private boolean isPhoneVerified = false;
+
+    private LocalDateTime lastLoginAt;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void setDefaults() {
+        if (this.role == null) {
+            this.role = Role.USER;
+        }
+        if (this.status == null) {
+            this.status = AccountStatus.ACTIVATED;
+        }
+    }
 }

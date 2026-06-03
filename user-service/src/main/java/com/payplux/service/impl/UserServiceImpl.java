@@ -5,10 +5,12 @@ import com.payplux.dto.response.AuthResponse;
 import com.payplux.exception.custom.DuplicateResourceException;
 import com.payplux.exception.custom.InvalidRequestException;
 import com.payplux.exception.custom.UserNotFoundException;
+import com.payplux.model.RefreshToken;
 import com.payplux.model.Role;
 import com.payplux.model.UserModel;
 import com.payplux.repository.UserRepository;
 import com.payplux.security.JwtUtil;
+import com.payplux.service.RefreshTokenService;
 import com.payplux.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -28,6 +30,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     private final JwtUtil jwtUtil;
+
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public UserModel registerUser(UserModel userModel) {
@@ -95,8 +99,10 @@ public class UserServiceImpl implements UserService {
                 user.getRole().name()
         );
 
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
         return AuthResponse.builder()
                 .token(token)
+                .refreshToken(refreshToken.getToken())
                 .role(user.getRole().name())
                 .build();
     }
@@ -113,5 +119,27 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
         user.setRole(role);
         return userRepository.save(user);
+    }
+
+    @Override
+    public AuthResponse refreshToken(String requestToken) {
+
+        RefreshToken refreshToken = refreshTokenService.findByToken(requestToken)
+                .map(refreshTokenService::verifyExpiration)
+                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+
+        UserModel user = refreshToken.getUser();
+
+        String accessToken = jwtUtil.generateToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+
+        return AuthResponse.builder()
+                .token(accessToken)
+                .refreshToken(requestToken)
+                .role(user.getRole().name())
+                .build();
     }
 }

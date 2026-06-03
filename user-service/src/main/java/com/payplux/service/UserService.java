@@ -2,6 +2,7 @@ package com.payplux.service;
 
 import com.payplux.dto.request.LoginRequest;
 import com.payplux.dto.response.AuthResponse;
+import com.payplux.model.RefreshToken;
 import com.payplux.model.Role;
 import com.payplux.model.UserModel;
 import org.jspecify.annotations.Nullable;
@@ -29,4 +30,6 @@ public interface UserService {
     Optional<UserModel> getCurrentUser(String token);
 
     UserModel updateUserRole(Long userId, Role role);
+
+    AuthResponse refreshToken(String refreshToken);
 }

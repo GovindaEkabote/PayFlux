@@ -8,5 +8,6 @@ import lombok.Data;
 public class AuthResponse {
     private String token;
     private String role;
+    private String refreshToken;
 //    private String tokenType = "Bearer";
 }

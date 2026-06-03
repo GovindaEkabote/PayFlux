@@ -1,11 +1,13 @@
 package com.payplux.controller;
 
 import com.payplux.dto.request.LoginRequest;
+import com.payplux.dto.request.RefreshTokenRequest;
 import com.payplux.dto.response.AuthResponse;
 import com.payplux.exception.custom.UserNotFoundException;
 import com.payplux.model.Role;
 import com.payplux.model.UserModel;
 import com.payplux.security.JwtUtil;
+import com.payplux.service.RefreshTokenService;
 import com.payplux.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
@@ -21,6 +23,7 @@ public class AuthController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/register")
     public ResponseEntity<UserModel> registerUser(@RequestBody UserModel userModel) {
@@ -34,6 +37,28 @@ public class AuthController {
         return ResponseEntity.ok(userService.login(request));
     }
 
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthResponse> refreshToken(
+            @RequestBody RefreshTokenRequest request
+    ) {
+        return ResponseEntity.ok(
+                userService.refreshToken(request.getRefreshToken())
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+        String token = extractToken(request);
+        String email = jwtUtil.extractEmail(token);
+
+        UserModel user = userService.getByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        refreshTokenService.deleteByUser(user);
+
+        return ResponseEntity.ok("Logged out successfully");
+    }
+
     @GetMapping("/me")
     public ResponseEntity<UserModel> getCurrentUser(HttpServletRequest request) {
 
@@ -43,16 +68,6 @@ public class AuthController {
                 .orElseThrow(() -> new UserNotFoundException("User Not Found"));
 
         return new ResponseEntity<>(userModel, HttpStatus.OK);
-    }
-
-
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request) {
-
-        String token = extractToken(request);
-//        blacklistService.blacklistToken(token);
-
-        return ResponseEntity.ok("Logged out successfully");
     }
 
     @PutMapping("/admin/role/{userId}")
