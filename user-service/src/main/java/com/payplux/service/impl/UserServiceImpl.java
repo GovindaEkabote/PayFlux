@@ -2,22 +2,29 @@ package com.payplux.service.impl;
 
 import com.payplux.dto.request.LoginRequest;
 import com.payplux.dto.response.AuthResponse;
+import com.payplux.dto.response.SessionResponse;
 import com.payplux.exception.custom.DuplicateResourceException;
 import com.payplux.exception.custom.InvalidRequestException;
 import com.payplux.exception.custom.UserNotFoundException;
+import com.payplux.model.AuthSession;
 import com.payplux.model.RefreshToken;
 import com.payplux.model.Role;
 import com.payplux.model.UserModel;
+import com.payplux.repository.AuthSessionRepository;
 import com.payplux.repository.UserRepository;
 import com.payplux.security.JwtUtil;
 import com.payplux.service.RefreshTokenService;
 import com.payplux.service.UserService;
+import com.payplux.util.DeviceUtils;
+import com.payplux.util.IpUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +39,9 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
 
     private final RefreshTokenService refreshTokenService;
+
+    private final AuthSessionRepository authSessionRepository;
+
 
     @Override
     public UserModel registerUser(UserModel userModel) {
@@ -84,7 +94,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public AuthResponse login(LoginRequest loginRequest) {
+    public AuthResponse login(LoginRequest loginRequest, String ip, String device) {
 
         UserModel user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -93,19 +103,31 @@ public class UserServiceImpl implements UserService {
             throw new InvalidRequestException("Invalid email or password");
         }
 
-        String token = jwtUtil.generateToken(
+        String accessToken = jwtUtil.generateToken(
                 user.getId(),
                 user.getEmail(),
                 user.getRole().name()
         );
 
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+        AuthSession authSession = new AuthSession();
+        authSession.setUserId(user.getId());
+        authSession.setRefreshToken(refreshToken.getToken());
+        authSession.setIpAddress(ip);
+        authSession.setDeviceInfo(device);
+        authSession.setLastActiveAt(LocalDateTime.now());
+        authSession.setRevoked(false);
+
+        authSessionRepository.save(authSession);
+
         return AuthResponse.builder()
-                .token(token)
+                .token(accessToken)
                 .refreshToken(refreshToken.getToken())
                 .role(user.getRole().name())
                 .build();
     }
+
 
     @Override
     public Optional<UserModel> getCurrentUser(String token) {
@@ -141,5 +163,18 @@ public class UserServiceImpl implements UserService {
                 .refreshToken(requestToken)
                 .role(user.getRole().name())
                 .build();
+    }
+
+    @Override
+    public List<SessionResponse> getActiveSessions(Long userId) {
+        return authSessionRepository
+                .findByUserIdAndIsRevokedFalse(userId)
+                .stream()
+                .map(authSession -> new SessionResponse(
+                        authSession.getDeviceInfo(),
+                        authSession.getIpAddress(),
+                        authSession.getLastActiveAt()
+                ))
+                .toList();
     }
 }

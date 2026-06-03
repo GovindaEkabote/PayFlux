@@ -3,17 +3,25 @@ package com.payplux.controller;
 import com.payplux.dto.request.LoginRequest;
 import com.payplux.dto.request.RefreshTokenRequest;
 import com.payplux.dto.response.AuthResponse;
+import com.payplux.dto.response.SessionResponse;
 import com.payplux.exception.custom.UserNotFoundException;
+import com.payplux.model.AuthSession;
 import com.payplux.model.Role;
 import com.payplux.model.UserModel;
+import com.payplux.repository.AuthSessionRepository;
 import com.payplux.security.JwtUtil;
 import com.payplux.service.RefreshTokenService;
 import com.payplux.service.UserService;
+import com.payplux.util.DeviceUtils;
+import com.payplux.util.IpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 
 @RestController
@@ -24,6 +32,7 @@ public class AuthController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+    private final AuthSessionRepository authSessionRepository;
 
     @PostMapping("/register")
     public ResponseEntity<UserModel> registerUser(@RequestBody UserModel userModel) {
@@ -33,8 +42,17 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(userService.login(request));
+    public ResponseEntity<AuthResponse> login(
+            @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest) {
+
+        return ResponseEntity.ok(
+                userService.login(
+                        request,
+                        IpUtils.getClientIp(httpRequest),
+                        DeviceUtils.getDeviceInfo(httpRequest)
+                )
+        );
     }
 
     @PostMapping("/refresh-token")
@@ -48,13 +66,28 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request) {
+
         String token = extractToken(request);
+
+        // 1. Extract user
         String email = jwtUtil.extractEmail(token);
 
         UserModel user = userService.getByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
+        // 2. Revoke refresh tokens
         refreshTokenService.deleteByUser(user);
+
+        // 3. Revoke active sessions (IMPORTANT 🔥)
+        List<AuthSession> sessions =
+                authSessionRepository.findByUserIdAndIsRevokedFalse(user.getId());
+
+        sessions.forEach(session -> {
+            session.setRevoked(true);
+            session.setLastActiveAt(LocalDateTime.now());
+        });
+
+        authSessionRepository.saveAll(sessions);
 
         return ResponseEntity.ok("Logged out successfully");
     }
@@ -94,5 +127,20 @@ public class AuthController {
             return authHeader.substring(7);
         }
         throw new RuntimeException("Missing or invalid Authorization header");
+    }
+
+    @GetMapping("/sessions")
+    public ResponseEntity<List<SessionResponse>> getSessions(HttpServletRequest request) {
+
+        String token = extractToken(request);
+        String email = jwtUtil.extractEmail(token);
+
+        Long userId = userService.getByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"))
+                .getId();
+
+        return ResponseEntity.ok(
+                userService.getActiveSessions(userId)
+        );
     }
 }
