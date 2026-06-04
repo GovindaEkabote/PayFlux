@@ -33,4 +33,10 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.getAllTransactions());
     }
 
+    @GetMapping("/reference/{referenceId}")
+    public  ResponseEntity<Transaction> getReferenceById(@PathVariable String referenceId){
+        Transaction transaction = transactionService.getTransactionByReferenceId(referenceId);
+        return ResponseEntity.ok(transaction);
+    }
+
 }

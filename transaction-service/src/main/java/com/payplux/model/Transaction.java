@@ -1,6 +1,7 @@
 package com.payplux.model;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -10,6 +11,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "transactions")
 @Data
+//@Builder
 public class Transaction {
 
     @Id
@@ -32,6 +34,12 @@ public class Transaction {
     @Column(nullable = false)
     private TransactionStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionType type;
+
+    private String remarks;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -40,10 +48,18 @@ public class Transaction {
 
     @PrePersist
     public void prePersist() {
-        this.referenceId = UUID.randomUUID().toString();
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-        this.status = TransactionStatus.PENDING;
+
+        if (referenceId == null) {
+            referenceId = UUID.randomUUID().toString();
+        }
+
+        if (status == null) {
+            status = TransactionStatus.PENDING;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
     }
 
     @PreUpdate
