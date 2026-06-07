@@ -1,4 +1,4 @@
-package com.payflux;
+package com.payplux;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
