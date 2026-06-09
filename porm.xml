@@ -13,6 +13,7 @@
         <module>transaction-service</module>
         <module>notification-service</module>
         <module>reward-service</module>
+        <module>api-gateway</module>
 
         <!-- Add your other services here -->
     </modules>

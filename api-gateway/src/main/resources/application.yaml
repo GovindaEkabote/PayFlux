@@ -1,0 +1,39 @@
+server:
+  port: 5004
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      routes:
+        # user Service
+        - id: user-service
+          uri: http://localhost:5001
+          predicates:
+            - Path=/api/v1/users/**
+
+        # Transaction Service
+        - id: transaction-service
+          uri: http://localhost:5002
+          predicates:
+            - Path=/api/v1/transactions/**
+
+        # Notification Service
+        - id: notification-service
+          uri: http://localhost:5003
+          predicates:
+            - Path=/api/v1/templates/**
+
+        # Reward Service
+        - id: reward-service
+          uri: http://localhost:5004
+          predicates:
+            - Path=/api/rewards/**
+
+
+
+
