@@ -1,9 +1,17 @@
 server:
-  port: 5004
+  port: 5005
 
 spring:
+  main:
+    web-application-type: reactive
   application:
     name: api-gateway
+
+    httpclient:
+      max-initial-line-length: 4096
+      max-header-size: 8192
+    filters:
+      maxSize: 10MB
 
   cloud:
     gateway:

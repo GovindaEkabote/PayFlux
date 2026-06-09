@@ -7,11 +7,13 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+@Component
 public class JwtAuthFilter implements GlobalFilter, Ordered {
 
 
@@ -51,6 +53,8 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
             Claims claims = JwtUtil.validateToken(tokenValue);
             exchange.getRequest().mutate()
                     .header("X-User-Email", claims.getSubject())
+                    .header("X-User-Id", claims.get("userId").toString())
+                    .header("X-User-Role", claims.get("role").toString())
                     .build();
             return chain.filter(exchange)
                     .doOnSubscribe(s -> {
@@ -70,6 +74,6 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return 0;
+        return -100;
     }
 }
