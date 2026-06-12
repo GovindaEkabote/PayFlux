@@ -25,9 +25,12 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(
             ServerWebExchange exchange,
             GatewayFilterChain chain) {
+        System.out.println("=== JWT FILTER START ===");
         String path = exchange.getRequest().getURI().getPath();
         String normalizedPath = path.replace("/api/v1", "");
         if(PUBLIC_PATHS.contains(normalizedPath)) {
+            System.out.println("JWT Filter Executed");
+            System.out.println(exchange.getRequest().getURI());
             return chain.filter(exchange)
                     .doOnSubscribe(s -> {
                         System.out.println("Proceeding without check");
@@ -51,21 +54,24 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 
             String tokenValue = token.substring(7);
             Claims claims = JwtUtil.validateToken(tokenValue);
-            exchange.getRequest().mutate()
-                    .header("X-User-Email", claims.getSubject())
-                    .header("X-User-Id", claims.get("userId").toString())
-                    .header("X-User-Role", claims.get("role").toString())
-                    .build();
-            return chain.filter(exchange)
-                    .doOnSubscribe(s -> {
-                        System.out.println("Proceeding without check");
-                    })
-                    .doOnSuccess(s -> {
-                        System.out.println("Successfully proceeded");
-                    })
-                    .doOnError(e -> {
-                        System.out.println("Failed to proceed");
-                    });
+
+            System.out.println("USER ID = " + claims.get("userId"));
+            System.out.println("ROLE = " + claims.get("role"));
+
+            ServerWebExchange modifiedExchange =
+                    exchange.mutate()
+                            .request(
+                                    exchange.getRequest()
+                                            .mutate()
+                                            .header("X-User-Email", claims.getSubject())
+                                            .header("X-USER-ID", claims.get("userId").toString())
+                                            .header("X-User-Role", claims.get("role").toString())
+                                            .build()
+                            )
+                            .build();
+
+            return chain.filter(modifiedExchange);
+
         } catch (Exception e) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();

@@ -39,4 +39,9 @@ public class TransactionController {
         return ResponseEntity.ok(transaction);
     }
 
+    @GetMapping("/test")
+    public String test() {
+        return "Transaction Service Working";
+    }
+
 }
