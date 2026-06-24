@@ -3,6 +3,7 @@ package com.payplux.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,17 +17,28 @@ public class WalletHold {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "wallet_id")
-    private Long walletId;
+    private Wallet walletId;
 
-    @Column(name = "amount")
-    private Double amount;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal amount;
 
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false, unique = true)
+    private String holdReference;
+
+    private LocalDateTime createdAt;
 
     private LocalDateTime expiredAt;
 
+    @PrePersist
+    private void prePersist() {
+        createdAt = LocalDateTime.now();
 
+        if(holdReference == null){
+            holdReference =
+                    "HOLD-" + System.currentTimeMillis();
+        }
+    }
 }

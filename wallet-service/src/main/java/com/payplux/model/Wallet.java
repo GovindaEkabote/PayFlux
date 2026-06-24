@@ -3,6 +3,7 @@ package com.payplux.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,11 +21,11 @@ public class Wallet {
     @Column(nullable = false, length = 3)
     private  String currency = "INR";
 
-    @Column(nullable = false)
-    private Double balance = 0.0;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal balance = BigDecimal.ZERO;
 
-    @Column(nullable = false)
-    private Double availableBalance = 0.0;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal availableBalance = BigDecimal.ZERO;
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -33,5 +34,10 @@ public class Wallet {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
 
+
+    public Wallet(String userId, String currency) {
+        this.userId = userId;
+        this.currency = currency;
+    }
 
 }

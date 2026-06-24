@@ -1,7 +1,7 @@
 package com.payplux.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -10,6 +10,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "transactions")
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class Transaction {
 
     @Id
@@ -20,10 +22,10 @@ public class Transaction {
     private String referenceId;
 
     @Column(nullable = false)
-    private Long senderId;
+    private String senderId;
 
     @Column(nullable = false)
-    private Long receiverId;
+    private String receiverId;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
@@ -43,6 +45,22 @@ public class Transaction {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    public Transaction(
+            String senderId,
+            String receiverId,
+            BigDecimal amount,
+            TransactionType type,
+            TransactionStatus status,
+            String remarks) {
+
+        this.senderId = senderId;
+        this.receiverId = receiverId;
+        this.amount = amount;
+        this.type = type;
+        this.status = status;
+        this.remarks = remarks;
+    }
 
     @PrePersist
     public void prePersist() {

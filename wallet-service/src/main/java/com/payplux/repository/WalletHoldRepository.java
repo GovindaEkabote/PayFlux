@@ -13,6 +13,6 @@ public interface WalletHoldRepository extends JpaRepository<WalletHold, Long> {
 
     Optional<WalletHold> findByHoldReference(String holdReference);
 
-    List<WalletHold>  findByStatusAndExpireAtBefore(String active, LocalDateTime now);
+    List<WalletHold>  findByStatusAndExpiredAtBefore(String status, LocalDateTime now);
 
 }
